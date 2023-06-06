@@ -1,4 +1,5 @@
 import Person from "../models/Person.js";
+import user from "../models/User.js";
 import isString from "../utils/isString.js";
 
 async function getPersons(_, res) {
@@ -24,26 +25,17 @@ async function createPerson(req, res, next) {
   try {
     const { name, number } = req.body;
 
-    if (name === undefined || number === undefined)
-      return res.status(400).json({ error: "Content is missing" });
-
-    const personExists = await Person.findOne({ name });
-
-    if (personExists)
-      return res.status(400).json({ error: "Person already exists" });
-
-    if (name === "" || number === "")
-      return res.status(400).json({ error: "Name and number are required" });
-
-    if (!isString(name) || !isString(number))
-      return res.status(400).json({ error: "Name and number must be strings" });
+    const user = await User.findById(userID);
 
     const person = new Person({
       name,
       number,
+      user: user.id,
     });
 
     const savedPerson = await person.save();
+    user.persons = user.persons.concat(savedPerson._id);
+    await user.save();
 
     return res.status(201).json(savedPerson);
   } catch (error) {
